@@ -62,3 +62,7 @@ npm run build:mac
 2.  进入浏览器的下载列表，取消/暂停该下载任务。
 3.  在下载列表中右键复制“实际下载地址”。
 4.  将该地址粘贴到应用中进行转存即可。
+
+# 安装包下载
+
+https://github.com/xuhongming251/CloudFileRelay/releases
