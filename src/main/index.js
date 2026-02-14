@@ -100,6 +100,7 @@ ipcMain.handle('api:submit', async (event, req) => {
             url: inputs.url,
             channel: inputs.channel,
             status: '正在转存',
+            retry_count: 0,
             created_at: dayjs().format('YYYY-MM-DD HH:mm:ss')
         };
         sessionManager.addTask(task);
@@ -137,7 +138,34 @@ ipcMain.handle('api:refresh', async () => {
                     if (runData.status === 'completed') {
                         if (runData.conclusion === 'success') {
                             const result = await processor.getResult(runId);
-                            if (result) {
+                            if (result && result.status === 'error' && result.error === 'network error') {
+                                const retryCount = (task.retry_count || 0) + 1;
+                                if (retryCount <= 5) {
+                                    const newTraceId = processor.generateTaskId();
+                                    const inputs = {
+                                        url: task.url,
+                                        local_file: task.filename,
+                                        channel: task.channel
+                                    };
+                                    const res = await processor.execTask('upload.yml', inputs, newTraceId);
+                                    if (res.success) {
+                                        sessionManager.updateTask(task.trace_id, {
+                                            trace_id: newTraceId,
+                                            run_id: null,
+                                            retry_count: retryCount,
+                                            status: '正在转存',
+                                            result: `网络错误，正在进行第 ${retryCount} 次重试...`
+                                        });
+                                    } else {
+                                        sessionManager.updateTask(task.trace_id, { 
+                                            status: '失败', 
+                                            result: `重试提交失败 (第 ${retryCount} 次): ` + JSON.stringify(res.error) 
+                                        });
+                                    }
+                                } else {
+                                    sessionManager.updateTask(task.trace_id, { status: '失败', result: '网络错误，已达最大重试次数' });
+                                }
+                            } else if (result) {
                                 sessionManager.updateTask(task.trace_id, {
                                     status: '已转存',
                                     share_url: result.share_url || result.url || '',
