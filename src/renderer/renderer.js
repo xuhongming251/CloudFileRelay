@@ -356,13 +356,13 @@ window.electronAPI.invoke('api:get-version').then(v => {
 });
 window.electronAPI.invoke('api:get-tasks').then(renderTasks);
 
-// 轮询 (频率调整为 10s 以降低消耗，手动刷新可补足)
+// 轮询
 setInterval(async () => {
     try {
         const res = await window.electronAPI.invoke('api:refresh');
         if (res.tasks) renderTasks(res.tasks);
     } catch (e) {}
-}, 10000);
+}, 5000);
 
 prevPageBtn.onclick = () => {
     if (currentPage > 1) {

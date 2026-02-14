@@ -85,7 +85,13 @@ ipcMain.handle('api:submit', async (event, req) => {
         return { success: false, message: '该任务已在转存中，请耐心等待' };
     }
 
-    const traceId = processor.generateTaskId();
+    const channelMap = {
+        '0': 'quark',
+        '1': 'baidu',
+        '2': 'mobile'
+    };
+    const channelName = channelMap[req.channel] || req.channel || 'task';
+    const traceId = processor.generateTaskId(channelName);
     const inputs = {
         url: req.url.trim(),
         local_file: req.filename || path.basename(new URL(req.url).pathname) || 'file',
@@ -135,37 +141,47 @@ ipcMain.handle('api:refresh', async () => {
 
                 if (runId) {
                     const runData = await processor.getTaskStatus(runId);
+                    // console.log(`[Task ${task.trace_id}] Workflow status: ${runData.status}, conclusion: ${runData.conclusion}`);
                     if (runData.status === 'completed') {
-                        if (runData.conclusion === 'success') {
-                            const result = await processor.getResult(runId);
-                            if (result && result.status === 'error' && result.error === 'network error') {
-                                const retryCount = (task.retry_count || 0) + 1;
-                                if (retryCount <= 5) {
-                                    const newTraceId = processor.generateTaskId();
-                                    const inputs = {
-                                        url: task.url,
-                                        local_file: task.filename,
-                                        channel: task.channel
-                                    };
-                                    const res = await processor.execTask('upload.yml', inputs, newTraceId);
-                                    if (res.success) {
-                                        sessionManager.updateTask(task.trace_id, {
-                                            trace_id: newTraceId,
-                                            run_id: null,
-                                            retry_count: retryCount,
-                                            status: '正在转存',
-                                            result: `网络错误，正在进行第 ${retryCount} 次重试...`
-                                        });
-                                    } else {
-                                        sessionManager.updateTask(task.trace_id, { 
-                                            status: '失败', 
-                                            result: `重试提交失败 (第 ${retryCount} 次): ` + JSON.stringify(res.error) 
-                                        });
-                                    }
+                        // 无论成功还是失败，都尝试获取结果文件以判断是否是网络错误
+                        const result = await processor.getResult(runId);
+                        // console.log(`[Task ${task.trace_id}] Result:`, result);
+
+                        if (result && result.status === 'error' && result.error === 'network error') {
+                            const retryCount = (task.retry_count || 0) + 1;
+                            if (retryCount <= 5) {
+                                const channelMap = {
+                                    '0': 'quark',
+                                    '1': 'baidu',
+                                    '2': 'mobile'
+                                };
+                                const channelName = channelMap[task.channel] || task.channel || 'task';
+                                const newTraceId = processor.generateTaskId(channelName);
+                                const inputs = {
+                                    url: task.url,
+                                    local_file: task.filename,
+                                    channel: task.channel
+                                };
+                                const res = await processor.execTask('upload.yml', inputs, newTraceId);
+                                if (res.success) {
+                                    sessionManager.updateTask(task.trace_id, {
+                                        trace_id: newTraceId,
+                                        run_id: null,
+                                        retry_count: retryCount,
+                                        status: '正在转存',
+                                        result: `网络错误，正在进行第 ${retryCount} 次重试...`
+                                    });
                                 } else {
-                                    sessionManager.updateTask(task.trace_id, { status: '失败', result: '网络错误，已达最大重试次数' });
+                                    sessionManager.updateTask(task.trace_id, { 
+                                        status: '失败', 
+                                        result: `重试提交失败 (第 ${retryCount} 次): ` + JSON.stringify(res.error) 
+                                    });
                                 }
-                            } else if (result) {
+                            } else {
+                                sessionManager.updateTask(task.trace_id, { status: '失败', result: '网络错误，已达最大重试次数' });
+                            }
+                        } else if (runData.conclusion === 'success') {
+                            if (result) {
                                 sessionManager.updateTask(task.trace_id, {
                                     status: '已转存',
                                     share_url: result.share_url || result.url || '',
@@ -175,7 +191,7 @@ ipcMain.handle('api:refresh', async () => {
                                 sessionManager.updateTask(task.trace_id, { status: '失败', result: '未找到结果文件' });
                             }
                         } else {
-                            sessionManager.updateTask(task.trace_id, { status: '失败', result: 'Workflow 运行失败' });
+                            sessionManager.updateTask(task.trace_id, { status: '失败', result: `Workflow 运行失败 (${runData.conclusion})` });
                         }
                         updatedCount++;
                     }

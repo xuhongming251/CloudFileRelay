@@ -14,10 +14,11 @@ class GitHubProcessor {
         };
     }
 
-    generateTaskId() {
+    generateTaskId(channel = 'task') {
         const dateStr = dayjs().format('MMDD_HHmmss');
-        const shortUuid = uuidv4().slice(0, 4);
-        return `task_${dateStr}_${shortUuid}`;
+        // 将通道名转换为英文小写，并只保留英文字母
+        const channelTag = channel.toLowerCase().replace(/[^a-z]/g, '') || 'task';
+        return `task_${dateStr}_${channelTag}`;
     }
 
     async execTask(workflowFile, inputs, traceId) {
