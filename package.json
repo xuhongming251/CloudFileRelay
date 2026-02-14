@@ -1,0 +1,79 @@
+{
+  "name": "cloudfilerelay-desktop",
+  "version": "0.9.0",
+  "description": "Desktop client for CloudFileRelay",
+  "main": "src/main/index.js",
+  "author": "opencode",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xuhongming251/CloudFileRelay.git"
+  },
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "vite build && electron-builder",
+    "build:win": "vite build && electron-builder --win",
+    "build:mac": "vite build && electron-builder --mac",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "axios": "^1.13.5",
+    "dayjs": "^1.11.19",
+    "electron-updater": "^6.7.3",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron": "^40.4.1",
+    "electron-builder": "^26.7.0",
+    "vite": "^7.3.1",
+    "wait-on": "^9.0.4"
+  },
+  "build": {
+    "appId": "com.cloudfilerelay.app",
+    "productName": "CloudFileRelay",
+    "icon": "build/icon.png",
+    "files": [
+      "src/main/**/*",
+      "src/preload/**/*",
+      "src/renderer/dist/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "xuhongming251",
+        "repo": "CloudFileRelay"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "shortcutName": "云端转存助手"
+    }
+  }
+}
