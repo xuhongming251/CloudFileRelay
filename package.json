@@ -1,6 +1,6 @@
 {
   "name": "cloudfilerelay-desktop",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Desktop client for CloudFileRelay",
   "main": "src/main/index.js",
   "author": "opencode",
