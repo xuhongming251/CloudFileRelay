@@ -8,14 +8,15 @@ CloudFileRelay 是一款基于 Electron + Vite 开发的桌面端应用，旨在
 
 *   **便捷转存**：支持一键转存 GitHub 节点、Hugging Face 模型及数据集到网盘中。
 *   **无需翻墙**：直接在云端完成资源下载，不消耗本地翻墙流量。
-*   **离线转存**：无需手动下载后再上传，系统自动完成离线转存。
+*   **支持秒传**：热门模型，热门资源支持秒传。
+*   **离线转存**：任务发起后，无需开机等待，自动完成离线转存。
 *   **进度提示**：实时转存进度提示。
 *   **自动重试**：网络异常等原因，导致转存失败时，会自动重试。  
 *   **超大文件**：支持单文件最大将近 **50GB** 的文件转存。
 *   **支持网盘**：
-    *   **夸克网盘**：转存文件不超过47G。
-    *   **百度网盘**：转存文件不超过47G。
-    *   **移动网盘**：CMCC中国移动网盘，转存文件不超过5G，不开会员也不限速。
+    *   **夸克网盘**：会员大空间，满速传输。
+    *   **百度网盘**：会员大空间，满速传输。
+    *   **移动网盘**：CMCC中国移动网盘，单文件限制4G内，优点是不开会员也不限速。
 
 ## 二、使用说明
 
@@ -31,17 +32,23 @@ CloudFileRelay 是一款基于 Electron + Vite 开发的桌面端应用，旨在
 
 ### 4. 下载 Civitai (C站) 模型和Lora
 1.  在浏览器中点击下载具体模型，开始下载任务。
-2.  进入浏览器的下载列表，取消/暂停该下载任务。
-3.  在下载列表中右键复制“实际下载地址”。
-4.  将该地址粘贴到应用中进行转存即可。
+2.  进入浏览器的下载列表，取消该下载任务。
+3.  在下载列表中复制“实际下载地址”。
+4.  将该实际下载地址链接粘贴到输入框中进行转存即可。
 
-### 5. 请输入海外资源链接原始下载地址。
-转存服务器均在海外，最好不要输入国内镜像地址，否则转存速度不快。
+### 5. >>注意<<
+请输入海外资源链接原始下载地址，由于转存服务器均在海外，所以最好不要输入国内镜像地址，否则转存速度不快。
 
 ## 三、安装包下载
-* 支持Windows
-* 支持Mac
-* https://github.com/xuhongming251/CloudFileRelay/releases
+
+- **支持 Windows**
+  - [CloudFileRelay-Setup-0.9.7.exe](https://github.com/xuhongming251/CloudFileRelay/releases/download/v0.9.6/CloudFileRelay-Setup-0.9.7.exe)
+
+- **支持 Mac**
+  - [CloudFileRelay-0.9.7-arm64.dmg](https://github.com/xuhongming251/CloudFileRelay/releases/download/v0.9.6/CloudFileRelay-0.9.7-arm64.dmg)
+
+- **版本历史**
+  - [GitHub Releases](https://github.com/xuhongming251/CloudFileRelay/releases)
 
 
 
