@@ -106,6 +106,7 @@ ipcMain.handle('api:submit', async (event, req) => {
             url: inputs.url,
             channel: inputs.channel,
             status: '正在转存',
+            progress: 0,
             retry_count: 0,
             created_at: dayjs().format('YYYY-MM-DD HH:mm:ss')
         };
@@ -141,7 +142,28 @@ ipcMain.handle('api:refresh', async () => {
 
                 if (runId) {
                     const runData = await processor.getTaskStatus(runId);
-                    // console.log(`[Task ${task.trace_id}] Workflow status: ${runData.status}, conclusion: ${runData.conclusion}`);
+                    
+                    // 获取任务进度
+                    let progress = 0;
+                    try {
+                        const jobsData = await processor.getTaskJobs(runId);
+                        const job = jobsData.jobs?.[0];
+                        if (job) {
+                            const steps = job.steps || [];
+                            const running = steps.find(s => s.status === "in_progress") || 
+                                          [...steps].reverse().find(s => s.status === "completed");
+                            if (running) {
+                                progress = parseInt(running.name.split("-")[0]) || 0;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('获取进度失败:', err);
+                    }
+
+                    if (progress >= 0 && (task.progress === undefined || progress > task.progress)) {
+                        sessionManager.updateTask(task.trace_id, { progress });
+                    }
+
                     if (runData.status === 'completed') {
                         // 无论成功还是失败，都尝试获取结果文件以判断是否是网络错误
                         const result = await processor.getResult(runId);
@@ -167,6 +189,7 @@ ipcMain.handle('api:refresh', async () => {
                                     sessionManager.updateTask(task.trace_id, {
                                         trace_id: newTraceId,
                                         run_id: null,
+                                        progress: 0,
                                         retry_count: retryCount,
                                         status: '正在转存',
                                         result: `网络错误，正在进行第 ${retryCount} 次重试...`

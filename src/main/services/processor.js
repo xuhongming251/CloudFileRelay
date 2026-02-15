@@ -51,6 +51,12 @@ class GitHubProcessor {
         return resp.data;
     }
 
+    async getTaskJobs(runId) {
+        const url = `${this.baseUrl}/actions/runs/${runId}/jobs`;
+        const resp = await axios.get(url, { headers: this.headers });
+        return resp.data;
+    }
+
     async getResult(runId, artifactName = 'result') {
         const url = `${this.baseUrl}/actions/runs/${runId}/artifacts`;
         const resp = await axios.get(url, { headers: this.headers });

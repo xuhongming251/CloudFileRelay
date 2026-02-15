@@ -255,10 +255,10 @@ function renderTasks(tasks) {
                         ` : `
                             <div class="flex flex-col items-start sm:items-end space-y-1 sm:pr-2">
                                 <span class="text-[9px] md:text-[10px] font-black uppercase tracking-widest ${getStatusTextColor(task.status)}">
-                                    ${task.status}
+                                    ${task.status}${(task.progress !== undefined && task.status === '正在转存') ? ` ${task.progress}%` : ''}
                                 </span>
                                 <div class="w-10 md:w-12 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div class="h-full ${getStatusProgressBarColor(task.status)} ${task.status === '已转存' ? 'w-full' : 'w-1/3 animate-pulse'}"></div>
+                                    <div class="h-full ${getStatusProgressBarColor(task.status)} ${task.status === '已转存' ? 'w-full' : (task.progress !== undefined ? '' : 'w-1/3 animate-pulse')}" style="${(task.status !== '已转存' && task.progress !== undefined) ? `width: ${task.progress}%` : ''}"></div>
                                 </div>
                             </div>
                         `}
