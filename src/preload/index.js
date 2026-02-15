@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 新增的调用后端服务的方法
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
-  openExternal: (url) => ipcRenderer.send('open-external', url)
+  openExternal: (url) => ipcRenderer.send('open-external', url),
+  platform: process.platform
 });

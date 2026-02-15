@@ -88,6 +88,9 @@ if (!window.electronAPI) {
 
 // ---- 主题管理 ----
 function initTheme() {
+    if (window.electronAPI && window.electronAPI.platform === 'darwin') {
+        document.body.classList.add('is-mac');
+    }
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
