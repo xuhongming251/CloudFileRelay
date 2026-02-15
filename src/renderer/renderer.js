@@ -392,7 +392,14 @@ window.electronAPI.on('update_downloaded', () => {
             <div class="text-sm font-bold text-slate-800 dark:text-slate-200">更新已就绪</div>
             <div class="text-[10px] text-slate-500">重启应用即可完成升级</div>
         </div>
-        <button onclick="window.electronAPI.send('restart_app')" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-500/20 dark:shadow-none">立即重启</button>
+        <button id="restartBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-500/20 dark:shadow-none">立即重启</button>
     `;
+    
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+            window.electronAPI.send('restart_app');
+        });
+    }
 });
 

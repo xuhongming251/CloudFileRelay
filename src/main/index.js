@@ -35,6 +35,10 @@ function createWindow() {
     titleBarOverlay: { color: '#ffffff', symbolColor: '#333333' }
   });
 
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
   // 右键菜单支持
   mainWindow.webContents.on('context-menu', (event, params) => {
     const menu = Menu.buildFromTemplate([
@@ -204,17 +208,17 @@ ipcMain.handle('api:refresh', async () => {
                                 sessionManager.updateTask(task.trace_id, { status: '失败', result: '网络错误，已达最大重试次数' });
                             }
                         } else if (runData.conclusion === 'success') {
-                            if (result) {
+                            if (result && result.share_url && result.share_url != "") {
                                 sessionManager.updateTask(task.trace_id, {
                                     status: '已转存',
                                     share_url: result.share_url || result.url || '',
                                     result: result.message || '转存成功'
                                 });
                             } else {
-                                sessionManager.updateTask(task.trace_id, { status: '失败', result: '未找到结果文件' });
+                                sessionManager.updateTask(task.trace_id, { status: '失败', result: result.error || "未找到结果分享链接" });
                             }
                         } else {
-                            sessionManager.updateTask(task.trace_id, { status: '失败', result: `Workflow 运行失败 (${runData.conclusion})` });
+                            sessionManager.updateTask(task.trace_id, { status: '失败', result: `任务执行失败 (${runData.conclusion})` });
                         }
                         updatedCount++;
                     }
@@ -256,7 +260,10 @@ autoUpdater.on('update-downloaded', () => {
 });
 
 ipcMain.on('restart_app', () => {
-    autoUpdater.quitAndInstall();
+    if (mainWindow) mainWindow.close();
+    setImmediate(() => {
+        autoUpdater.quitAndInstall(false, true);
+    });
 });
 
 app.on('window-all-closed', () => {
