@@ -42,10 +42,10 @@ CloudFileRelay 是一款基于 Electron + Vite 开发的桌面端应用，旨在
 ## 三、安装包下载
 
 - **支持 Windows**
-  - [CloudFileRelay-Setup-0.9.7.exe](https://github.com/xuhongming251/CloudFileRelay/releases/download/v0.9.6/CloudFileRelay-Setup-0.9.7.exe)
+  - [CloudFileRelay-Setup-0.9.7.exe](https://github.com/xuhongming251/CloudFileRelay/releases/download/v0.9.7/CloudFileRelay.Setup.0.9.7.exe)
 
 - **支持 Mac**
-  - [CloudFileRelay-0.9.7-arm64.dmg](https://github.com/xuhongming251/CloudFileRelay/releases/download/v0.9.6/CloudFileRelay-0.9.7-arm64.dmg)
+  - [CloudFileRelay-0.9.7-arm64.dmg](https://github.com/xuhongming251/CloudFileRelay/releases/download/v0.9.7/CloudFileRelay-0.9.7-arm64.dmg)
 
 - **版本历史**
   - [GitHub Releases](https://github.com/xuhongming251/CloudFileRelay/releases)
