@@ -388,17 +388,27 @@ nextPageBtn.onclick = () => {
 window.electronAPI.on('update_available', () => updateNotice.classList.remove('hidden'));
 window.electronAPI.on('update_downloaded', () => {
     updateNotice.innerHTML = `
-        <div class="flex flex-col">
+        <div class="flex flex-col mr-2">
             <div class="text-sm font-bold text-slate-800 dark:text-slate-200">更新已就绪</div>
-            <div class="text-[10px] text-slate-500">重启应用即可完成升级</div>
+            <div class="text-[10px] text-slate-500">已下载最新安装包</div>
         </div>
-        <button id="restartBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-500/20 dark:shadow-none">立即重启</button>
+        <div class="flex space-x-2">
+            <button id="openDirBtn" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">打开目录</button>
+            <button id="restartBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-500/20 dark:shadow-none">重启升级</button>
+        </div>
     `;
     
     const restartBtn = document.getElementById('restartBtn');
     if (restartBtn) {
         restartBtn.addEventListener('click', () => {
             window.electronAPI.send('restart_app');
+        });
+    }
+
+    const openDirBtn = document.getElementById('openDirBtn');
+    if (openDirBtn) {
+        openDirBtn.addEventListener('click', () => {
+            window.electronAPI.send('open_update_dir');
         });
     }
 });

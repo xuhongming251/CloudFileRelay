@@ -251,19 +251,33 @@ app.whenReady().then(() => {
 });
 
 // ---- 自动更新监听 ----
+let downloadPath = '';
+
 autoUpdater.on('update-available', () => {
     if (mainWindow) mainWindow.webContents.send('update_available');
 });
 
-autoUpdater.on('update-downloaded', () => {
+autoUpdater.on('update-downloaded', (info) => {
+    if (info && info.downloadedFile) {
+        downloadPath = info.downloadedFile;
+    }
     if (mainWindow) mainWindow.webContents.send('update_downloaded');
 });
 
 ipcMain.on('restart_app', () => {
-    if (mainWindow) mainWindow.close();
-    setImmediate(() => {
-        autoUpdater.quitAndInstall(false, true);
-    });
+    autoUpdater.quitAndInstall();
+});
+
+ipcMain.on('open_update_dir', () => {
+    if (downloadPath) {
+        shell.showItemInFolder(downloadPath);
+    } else {
+        // 备用方案：尝试打开默认的更新缓存目录
+        const updatePath = path.join(app.getPath('userData'), '../CloudFileRelay-updater');
+        shell.openPath(updatePath).catch(err => {
+            console.error('Failed to open update directory:', err);
+        });
+    }
 });
 
 app.on('window-all-closed', () => {

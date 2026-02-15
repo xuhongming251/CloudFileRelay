@@ -1,9 +1,9 @@
 {
   "name": "cloudfilerelay-desktop",
-  "version": "0.9.6",
+  "version": "0.9.4",
   "description": "Desktop client for CloudFileRelay",
   "main": "src/main/index.js",
-  "author": "opencode",
+  "author": "xuhongming251",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xuhongming251/CloudFileRelay.git"
