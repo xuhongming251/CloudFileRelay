@@ -67,6 +67,9 @@ const taskCount = document.getElementById('taskCount');
 const refreshBtn = document.getElementById('refreshBtn');
 const updateNotice = document.getElementById('updateNotice');
 const toastContainer = document.getElementById('toastContainer');
+const menuBtn = document.getElementById('menuBtn');
+const mainMenu = document.getElementById('mainMenu');
+const githubLink = document.getElementById('githubLink');
 const themeToggle = document.getElementById('themeToggle');
 const sunIcon = document.getElementById('sunIcon');
 const moonIcon = document.getElementById('moonIcon');
@@ -99,11 +102,42 @@ function initTheme() {
     }
 }
 
+// ---- 菜单逻辑 ----
+function toggleMenu() {
+    mainMenu.classList.toggle('hidden');
+}
+
+menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMenu();
+});
+
 themeToggle.addEventListener('click', () => {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     sunIcon.classList.toggle('hidden');
     moonIcon.classList.toggle('hidden');
+    mainMenu.classList.add('hidden'); // 点击后关闭菜单
+});
+
+githubLink.addEventListener('click', () => {
+    window.electronAPI.openExternal('https://github.com/xuhongming251/CloudFileRelay');
+    mainMenu.classList.add('hidden'); // 点击后关闭菜单
+});
+
+document.addEventListener('click', (e) => {
+    // 处理两个下拉菜单的外部点击关闭
+    if (!selectMenu.classList.contains('hidden') && !e.target.closest('#customSelect')) {
+        toggleSelect();
+    }
+    if (!mainMenu.classList.contains('hidden') && !e.target.closest('#menuBtn') && !e.target.closest('#mainMenu')) {
+        mainMenu.classList.add('hidden');
+    }
+});
+
+
+githubLink.addEventListener('click', () => {
+    window.electronAPI.openExternal('https://github.com/xuhongming251/CloudFileRelay');
 });
 
 initTheme();
