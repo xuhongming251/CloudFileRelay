@@ -240,6 +240,16 @@ ipcMain.on('open-external', (event, url) => {
     shell.openExternal(url);
 });
 
+ipcMain.on('theme-changed', (event, theme) => {
+    if (mainWindow && process.platform === 'win32') {
+        const isDark = theme === 'dark';
+        mainWindow.setTitleBarOverlay({
+            color: isDark ? '#020617' : '#ffffff', // 对应 slate-950 和 white
+            symbolColor: isDark ? '#f8fafc' : '#333333' // 对应 slate-50 和 dark grey
+        });
+    }
+});
+
 // ---- 生命周期 ----
 
 app.whenReady().then(() => {

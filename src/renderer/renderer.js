@@ -99,6 +99,11 @@ function initTheme() {
         document.documentElement.classList.add('dark');
         sunIcon.classList.remove('hidden');
         moonIcon.classList.add('hidden');
+        
+        // 初始化时通知主进程
+        if (window.electronAPI && window.electronAPI.send) {
+            window.electronAPI.send('theme-changed', 'dark');
+        }
     }
 }
 
@@ -118,6 +123,11 @@ themeToggle.addEventListener('click', () => {
     sunIcon.classList.toggle('hidden');
     moonIcon.classList.toggle('hidden');
     mainMenu.classList.add('hidden'); // 点击后关闭菜单
+    
+    // 通知主进程更新系统按钮颜色
+    if (window.electronAPI && window.electronAPI.send) {
+        window.electronAPI.send('theme-changed', isDark ? 'dark' : 'light');
+    }
 });
 
 githubLink.addEventListener('click', () => {
@@ -135,10 +145,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-
-githubLink.addEventListener('click', () => {
-    window.electronAPI.openExternal('https://github.com/xuhongming251/CloudFileRelay');
-});
 
 initTheme();
 
