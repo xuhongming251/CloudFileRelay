@@ -228,8 +228,14 @@ async function copyText(text, label) {
 
 window.copyText = copyText;
 
+let lastRenderKey = '';
+
 function renderTasks(tasks) {
     allTasks = tasks || [];
+    const currentRenderKey = JSON.stringify({ tasks: allTasks, page: currentPage });
+    if (currentRenderKey === lastRenderKey) return;
+    lastRenderKey = currentRenderKey;
+
     taskCount.innerText = allTasks.length;
     
     if (allTasks.length === 0) {

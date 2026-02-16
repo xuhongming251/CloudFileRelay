@@ -73,7 +73,9 @@ function createWindow() {
 // ---- IPC 后端逻辑处理 ----
 
 ipcMain.handle('api:submit', async (event, req) => {
+    await sessionManager.init();
     const url = req.url.trim();
+
     const channel = req.channel || '0';
     
     // 检查是否存在重复且未完成的任务
@@ -120,121 +122,129 @@ ipcMain.handle('api:submit', async (event, req) => {
     return { success: false, message: '提交失败: ' + JSON.stringify(res.error) };
 });
 
-ipcMain.handle('api:get-tasks', () => {
+ipcMain.handle('api:get-tasks', async () => {
+    await sessionManager.init();
     return sessionManager.getTasks();
 });
+
 
 ipcMain.handle('api:get-version', () => {
     return app.getVersion();
 });
 
 ipcMain.handle('api:refresh', async () => {
+    await sessionManager.init();
     const tasks = sessionManager.getTasks();
     let updatedCount = 0;
 
-    for (const task of tasks) {
-        if (task.status === '正在转存') {
-            try {
-                let runId = task.run_id;
-                if (!runId) {
-                    const run = await processor.findTaskByTaskId('upload.yml', task.trace_id);
-                    if (run) {
-                        runId = run.id;
-                        sessionManager.updateTask(task.trace_id, { run_id: runId });
+    // 并行处理所有需要更新的任务
+    const updatePromises = tasks.map(async (task) => {
+        if (task.status !== '正在转存') return;
+
+        try {
+            let runId = task.run_id;
+            if (!runId) {
+                const run = await processor.findTaskByTaskId('upload.yml', task.trace_id);
+                if (run) {
+                    runId = run.id;
+                    sessionManager.updateTask(task.trace_id, { run_id: runId });
+                }
+            }
+
+            if (runId) {
+                const runData = await processor.getTaskStatus(runId);
+                
+                // 获取任务进度
+                let progress = 0;
+                try {
+                    const jobsData = await processor.getTaskJobs(runId);
+                    const job = jobsData.jobs?.[0];
+                    if (job) {
+                        const steps = job.steps || [];
+                        const running = steps.find(s => s.status === "in_progress") || 
+                                      [...steps].reverse().find(s => s.status === "completed");
+                        if (running) {
+                            progress = parseInt(running.name.split("-")[0]) || 0;
+                        }
                     }
+                } catch (err) {
+                    console.error('获取进度失败:', err);
                 }
 
-                if (runId) {
-                    const runData = await processor.getTaskStatus(runId);
-                    
-                    // 获取任务进度
-                    let progress = 0;
-                    try {
-                        const jobsData = await processor.getTaskJobs(runId);
-                        const job = jobsData.jobs?.[0];
-                        if (job) {
-                            const steps = job.steps || [];
-                            const running = steps.find(s => s.status === "in_progress") || 
-                                          [...steps].reverse().find(s => s.status === "completed");
-                            if (running) {
-                                progress = parseInt(running.name.split("-")[0]) || 0;
-                            }
-                        }
-                    } catch (err) {
-                        console.error('获取进度失败:', err);
-                    }
+                if (progress >= 0 && (task.progress === undefined || progress > task.progress)) {
+                    sessionManager.updateTask(task.trace_id, { progress });
+                }
 
-                    if (progress >= 0 && (task.progress === undefined || progress > task.progress)) {
-                        sessionManager.updateTask(task.trace_id, { progress });
-                    }
+                if (runData.status === 'completed') {
+                    // 无论成功还是失败，都尝试获取结果文件以判断是否是网络错误
+                    const result = await processor.getResult(runId);
 
-                    if (runData.status === 'completed') {
-                        // 无论成功还是失败，都尝试获取结果文件以判断是否是网络错误
-                        const result = await processor.getResult(runId);
-                        // console.log(`[Task ${task.trace_id}] Result:`, result);
-
-                        if (result && result.status === 'error' && result.error === 'network error') {
-                            const retryCount = (task.retry_count || 0) + 1;
-                            if (retryCount <= 5) {
-                                const channelMap = {
-                                    '0': 'quark',
-                                    '1': 'baidu',
-                                    '2': 'mobile'
-                                };
-                                const channelName = channelMap[task.channel] || task.channel || 'task';
-                                const newTraceId = processor.generateTaskId(channelName);
-                                const inputs = {
-                                    url: task.url,
-                                    local_file: task.filename,
-                                    channel: task.channel
-                                };
-                                const res = await processor.execTask('upload.yml', inputs, newTraceId);
-                                if (res.success) {
-                                    sessionManager.updateTask(task.trace_id, {
-                                        trace_id: newTraceId,
-                                        run_id: null,
-                                        progress: 0,
-                                        retry_count: retryCount,
-                                        status: '正在转存',
-                                        result: `网络错误，正在进行第 ${retryCount} 次重试...`
-                                    });
-                                } else {
-                                    sessionManager.updateTask(task.trace_id, { 
-                                        status: '失败', 
-                                        result: `重试提交失败 (第 ${retryCount} 次): ` + JSON.stringify(res.error) 
-                                    });
-                                }
-                            } else {
-                                sessionManager.updateTask(task.trace_id, { status: '失败', result: '网络错误，已达最大重试次数' });
-                            }
-                        } else if (runData.conclusion === 'success') {
-                            if (result && result.share_url && result.share_url != "") {
+                    if (result && result.status === 'error' && result.error === 'network error') {
+                        const retryCount = (task.retry_count || 0) + 1;
+                        if (retryCount <= 5) {
+                            const channelMap = {
+                                '0': 'quark',
+                                '1': 'baidu',
+                                '2': 'mobile'
+                            };
+                            const channelName = channelMap[task.channel] || task.channel || 'task';
+                            const newTraceId = processor.generateTaskId(channelName);
+                            const inputs = {
+                                url: task.url,
+                                local_file: task.filename,
+                                channel: task.channel
+                            };
+                            const res = await processor.execTask('upload.yml', inputs, newTraceId);
+                            if (res.success) {
                                 sessionManager.updateTask(task.trace_id, {
-                                    status: '已转存',
-                                    share_url: result.share_url || result.url || '',
-                                    result: result.message || '转存成功'
+                                    trace_id: newTraceId,
+                                    run_id: null,
+                                    progress: 0,
+                                    retry_count: retryCount,
+                                    status: '正在转存',
+                                    result: `网络错误，正在进行第 ${retryCount} 次重试...`
                                 });
                             } else {
-                                sessionManager.updateTask(task.trace_id, { status: '失败', result: result.error || "未找到结果分享链接" });
+                                sessionManager.updateTask(task.trace_id, { 
+                                    status: '失败', 
+                                    result: `重试提交失败 (第 ${retryCount} 次): ` + JSON.stringify(res.error) 
+                                });
                             }
                         } else {
-                            sessionManager.updateTask(task.trace_id, { status: '失败', result: `任务执行失败 (${runData.conclusion})` });
+                            sessionManager.updateTask(task.trace_id, { status: '失败', result: '网络错误，已达最大重试次数' });
                         }
-                        updatedCount++;
+                    } else if (runData.conclusion === 'success') {
+                        if (result && result.share_url && result.share_url != "") {
+                            sessionManager.updateTask(task.trace_id, {
+                                status: '已转存',
+                                share_url: result.share_url || result.url || '',
+                                result: result.message || '转存成功'
+                            });
+                        } else {
+                            sessionManager.updateTask(task.trace_id, { status: '失败', result: result.error || "未找到结果分享链接" });
+                        }
+                    } else {
+                        sessionManager.updateTask(task.trace_id, { status: '失败', result: `任务执行失败 (${runData.conclusion})` });
                     }
+                    updatedCount++;
                 }
-            } catch (e) {
-                console.error('更新任务失败:', e);
             }
+        } catch (e) {
+            console.error('更新任务失败:', e);
         }
-    }
+    });
+
+    await Promise.all(updatePromises);
     return { tasks: sessionManager.getTasks(), updatedCount };
 });
 
-ipcMain.handle('api:delete-task', (event, traceId) => {
+
+ipcMain.handle('api:delete-task', async (event, traceId) => {
+    await sessionManager.init();
     sessionManager.deleteTask(traceId);
     return sessionManager.getTasks();
 });
+
 
 ipcMain.on('open-external', (event, url) => {
     shell.openExternal(url);
