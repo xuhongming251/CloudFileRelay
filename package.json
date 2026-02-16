@@ -31,6 +31,7 @@
   },
   "build": {
     "appId": "com.cloudfilerelay.app",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "productName": "CloudFileRelay",
     "icon": "build/icon.png",
     "files": [

@@ -425,7 +425,57 @@ nextPageBtn.onclick = () => {
 };
 
 // 更新监听
-window.electronAPI.on('update_available', () => updateNotice.classList.remove('hidden'));
+window.electronAPI.on('update_available', (info) => {
+    updateNotice.classList.remove('hidden');
+    const versionInfo = info ? ` (v${info.version})` : '';
+    updateNotice.innerHTML = `
+        <div class="flex-shrink-0 w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-500 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path></svg>
+        </div>
+        <div>
+            <div class="text-sm font-bold text-slate-800 dark:text-slate-200">发现新版本${versionInfo}</div>
+            <div class="text-xs text-slate-500">正在准备下载...</div>
+        </div>
+        <button id="startDownloadBtn" class="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-500/20 dark:shadow-none">立即下载</button>
+    `;
+
+    const startDownloadBtn = document.getElementById('startDownloadBtn');
+    if (startDownloadBtn) {
+        startDownloadBtn.addEventListener('click', () => {
+            startDownloadBtn.disabled = true;
+            startDownloadBtn.innerText = '正在请求...';
+            window.electronAPI.send('start_download');
+        });
+    }
+});
+
+window.electronAPI.on('update_progress', (percent) => {
+    updateNotice.classList.remove('hidden');
+    const p = Math.floor(percent);
+    
+    // 隐藏开始下载按钮
+    const btn = document.getElementById('startDownloadBtn');
+    if (btn) btn.classList.add('hidden');
+
+    const desc = updateNotice.querySelector('.text-xs');
+    if (desc) desc.innerText = `正在下载: ${p}%`;
+    
+    // 更新图标旋转
+    const icon = updateNotice.querySelector('svg');
+    if (icon) {
+        icon.style.transform = `rotate(${percent * 3.6}deg)`;
+    }
+});
+
+window.electronAPI.on('update_error', (message) => {
+    updateNotice.classList.remove('hidden');
+    updateNotice.querySelector('.text-sm').innerText = '更新失败';
+    updateNotice.querySelector('.text-xs').innerText = message;
+    setTimeout(() => {
+        updateNotice.classList.add('hidden');
+    }, 5000);
+});
+
 window.electronAPI.on('update_downloaded', () => {
     updateNotice.innerHTML = `
         <div class="flex flex-col mr-2">

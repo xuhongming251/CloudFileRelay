@@ -263,20 +263,49 @@ app.whenReady().then(() => {
 // ---- 自动更新监听 ----
 let downloadPath = '';
 
-autoUpdater.on('update-available', () => {
-    if (mainWindow) mainWindow.webContents.send('update_available');
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.logger = console;
+
+autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info.version);
+    if (mainWindow) mainWindow.webContents.send('update_available', info);
+});
+
+autoUpdater.on('update-not-available', () => {
+    console.log('Update not available.');
+});
+
+autoUpdater.on('error', (err) => {
+    console.error('Updater error:', err);
+    if (mainWindow) mainWindow.webContents.send('update_error', err.message || '更新过程出现错误');
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+    console.log(`Download progress: ${progressObj.percent}%`);
+    if (mainWindow) mainWindow.webContents.send('update_progress', progressObj.percent);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded');
     if (info && info.downloadedFile) {
         downloadPath = info.downloadedFile;
     }
     if (mainWindow) mainWindow.webContents.send('update_downloaded');
 });
 
+ipcMain.on('start_download', () => {
+    autoUpdater.downloadUpdate();
+});
+
 ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
 });
+
 
 ipcMain.on('open_update_dir', () => {
     if (downloadPath) {
