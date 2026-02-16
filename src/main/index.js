@@ -10,11 +10,11 @@ let mainWindow;
 let tray;
 
 part1 = "ghp"
-part2 = "idQA9DdZHOH6DRvwUcHU000q4ebo544R72I8"
+part2 = "pRRFjrUr3tkHF9XHX14mDE7SHjb4FN0722F2"
 str = part1 + "_" + part2
 
 ower = "xuhongming251"
-service = "save_network_disk"
+service = "upload_cloud_storage"
 
 const processor = new GitHubProcessor(
     str, 
