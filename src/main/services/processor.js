@@ -81,6 +81,17 @@ class GitHubProcessor {
         }
         return null;
     }
+
+    async cancelTask(runId) {
+        const url = `${this.baseUrl}/actions/runs/${runId}/cancel`;
+        try {
+            const resp = await axios.post(url, {}, { headers: this.headers });
+            return { success: resp.status === 202, status: resp.status };
+        } catch (err) {
+            return { success: false, error: err.response?.data || err.message };
+        }
+    }
 }
+
 
 module.exports = GitHubProcessor;

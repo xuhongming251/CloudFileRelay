@@ -1,6 +1,6 @@
 {
   "name": "cloudfilerelay-desktop",
-  "version": "0.9.9",
+  "version": "1.0.0",
   "description": "Desktop client for CloudFileRelay",
   "main": "src/main/index.js",
   "author": "xuhongming251",

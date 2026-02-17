@@ -241,6 +241,28 @@ ipcMain.handle('api:refresh', async () => {
 
 ipcMain.handle('api:delete-task', async (event, traceId) => {
     await sessionManager.init();
+    const tasks = sessionManager.getTasks();
+    const task = tasks.find(t => t.trace_id === traceId);
+    
+    if (task && task.status === '正在转存') {
+        try {
+            let runId = task.run_id;
+            if (!runId) {
+                const run = await processor.findTaskByTaskId('upload.yml', traceId);
+                if (run) {
+                    runId = run.id;
+                }
+            }
+            
+            if (runId) {
+                console.log(`Cancelling task ${traceId} with runId ${runId}`);
+                await processor.cancelTask(runId);
+            }
+        } catch (e) {
+            console.error('取消任务失败:', e);
+        }
+    }
+
     sessionManager.deleteTask(traceId);
     return sessionManager.getTasks();
 });
