@@ -21,6 +21,13 @@ const processor = new GitHubProcessor(
     `https://github.com/${ower}/${service}`
 );
 
+function getTaskYml(url) {
+    if (url && url.startsWith('https://pan.baidu.com')) {
+        return 'upload_linux.yml';
+    }
+    return 'upload.yml';
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -104,7 +111,7 @@ ipcMain.handle('api:submit', async (event, req) => {
         channel: req.channel || '0'
     };
 
-    const res = await processor.execTask('upload.yml', inputs, traceId);
+    const res = await processor.execTask(getTaskYml(inputs.url), inputs, traceId);
     if (res.success) {
         const task = {
             trace_id: traceId,
@@ -144,7 +151,7 @@ ipcMain.handle('api:refresh', async () => {
         try {
             let runId = task.run_id;
             if (!runId) {
-                const run = await processor.findTaskByTaskId('upload.yml', task.trace_id);
+                const run = await processor.findTaskByTaskId(getTaskYml(task.url), task.trace_id);
                 if (run) {
                     runId = run.id;
                     sessionManager.updateTask(task.trace_id, { run_id: runId });
@@ -194,7 +201,7 @@ ipcMain.handle('api:refresh', async () => {
                                 local_file: task.filename,
                                 channel: task.channel
                             };
-                            const res = await processor.execTask('upload.yml', inputs, newTraceId);
+                            const res = await processor.execTask(getTaskYml(task.url), inputs, newTraceId);
                             if (res.success) {
                                 sessionManager.updateTask(task.trace_id, {
                                     trace_id: newTraceId,
@@ -248,7 +255,7 @@ ipcMain.handle('api:delete-task', async (event, traceId) => {
         try {
             let runId = task.run_id;
             if (!runId) {
-                const run = await processor.findTaskByTaskId('upload.yml', traceId);
+                const run = await processor.findTaskByTaskId(getTaskYml(task.url), traceId);
                 if (run) {
                     runId = run.id;
                 }
