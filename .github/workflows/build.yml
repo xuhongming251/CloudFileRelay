@@ -45,7 +45,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create/Update latest tag
+      - name: Rename artifacts for latest
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          mkdir -p release/latest
+
+          cp release/*.dmg release/latest/CloudFileRelay-Setup-latest.dmg || true
+          cp release/*.exe release/latest/CloudFileRelay-Setup-latest.exe || true
+          cp release/*.zip release/latest/CloudFileRelay-Setup-latest.zip || true
+
+      - name: Update latest tag
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           git tag -f latest
@@ -59,9 +68,9 @@ jobs:
           tag_name: latest
           name: Latest Build
           files: |
-            release/*.exe
-            release/*.dmg
-            release/*.zip
+            release/latest/CloudFileRelay-Setup-latest.dmg
+            release/latest/CloudFileRelay-Setup-latest.exe
+            release/latest/CloudFileRelay-Setup-latest.zip
             release/latest*.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
